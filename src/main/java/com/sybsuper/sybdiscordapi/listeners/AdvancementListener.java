@@ -15,7 +15,7 @@ public class AdvancementListener {
 		params.put("uuid", event.getPlayer().getUniqueID().toString());
 		DisplayInfo di = event.getAdvancement().getDisplay();
 		if (di != null) {
-			params.put("advancement_title", di.getTitle().getUnformattedComponentText());
+			params.put("advancement_title", event.getAdvancement().getDisplayText().getUnformattedComponentText());
 			params.put("advancement_description", di.getDescription().getUnformattedComponentText());
 			SybDiscordAPI.sendMessage("evt.advancement", params);
 		}
