@@ -61,6 +61,14 @@ public class Config {
 				"message: The message"
 		);
 		configureEvent(
+				"discordchat",
+				"Send a message when a user sends a message in the discord chat",
+				"&3Discord &f%user%&7: &f%message%",
+				false,
+				"user: The name of the user",
+				"message: The message"
+		);
+		configureEvent(
 				"death",
 				"Send a message when a player dies",
 				"**%message%**",
@@ -96,29 +104,35 @@ public class Config {
 	}
 
 	public static void configureEvent(String name, String description, String message, String... params) {
+		configureEvent(name, description, message, true, params);
+	}
+
+	public static void configureEvent(String name, String description, String message, boolean embed, String... params) {
 		String path = "evt." + name;
 		cb.comment(description);
 		configureOption(path + ".enabled", true);
-		configureOption(path + ".embed.enabled", true);
-		configureOption(path + ".embed.title", "");
-		configureOption(path + ".embed.color", "#969C9F");
-		configureOption(path + ".embed.description", message);
-		configureOption(path + ".embed.url", "");
-		configureOption(path + ".embed.timestamp", false);
-		configureOption(path + ".embed.footer.icon_url", "");
-		configureOption(path + ".embed.footer.text", "");
-		configureOption(path + ".embed.thumbnail", "");
-		configureOption(path + ".embed.image", "");
-		configureOption(path + ".embed.author.name", "");
-		configureOption(path + ".embed.author.url", "");
-		configureOption(path + ".embed.author.icon_url", "");
+		if (embed) {
+			configureOption(path + ".embed.enabled", true);
+			configureOption(path + ".embed.title", "");
+			configureOption(path + ".embed.color", "#969C9F");
+			configureOption(path + ".embed.description", message);
+			configureOption(path + ".embed.url", "");
+			configureOption(path + ".embed.timestamp", false);
+			configureOption(path + ".embed.footer.icon_url", "");
+			configureOption(path + ".embed.footer.text", "");
+			configureOption(path + ".embed.thumbnail", "");
+			configureOption(path + ".embed.image", "");
+			configureOption(path + ".embed.author.name", "");
+			configureOption(path + ".embed.author.url", "");
+			configureOption(path + ".embed.author.icon_url", "");
+		}
 		if (params.length > 0) {
 			List<String> li = new ArrayList<>();
 			li.add("Available parameters.");
 			li.addAll(Arrays.asList(params));
 			cb.comment(li.toArray(new String[0]));
 		}
-		configureOption(path + ".message", "");
+		configureOption(path + ".message", embed ? "" : message);
 	}
 
 	public static void setup() {

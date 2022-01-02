@@ -1,5 +1,6 @@
 package com.sybsuper.sybdiscordapi;
 
+import com.sybsuper.sybdiscordapi.jdalisteners.Message;
 import com.sybsuper.sybdiscordapi.listeners.*;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
@@ -8,6 +9,9 @@ import net.dv8tion.jda.api.MessageBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -25,6 +29,7 @@ import java.time.Instant;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Mod("sybdiscordapi")
 public class SybDiscordAPI {
@@ -34,6 +39,9 @@ public class SybDiscordAPI {
 	public static TextChannel channel;
 	public static Guild guild;
 	public static HashMap<String, Object> listeners = new HashMap<>();
+	public static HashMap<String, Object> jdalisteners = new HashMap<>();
+	public static MinecraftServer server;
+	public static UUID randomuuid = UUID.randomUUID();
 
 	public SybDiscordAPI() {
 		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
@@ -116,12 +124,19 @@ public class SybDiscordAPI {
 		channel.sendMessage(builder.build()).queue();
 	}
 
+	public static void broadcast(String msg) {
+		for (ServerPlayerEntity player : server.getPlayerList().getPlayers()) {
+			player.sendMessage(new StringTextComponent(msg.replaceAll("&", "\u00A7")), randomuuid);
+		}
+	}
+
 	private void setup(final FMLCommonSetupEvent event) {
 
 	}
 
 	@SubscribeEvent
 	public void onServerStarting(FMLServerStartingEvent event) throws StartException {
+		server = event.getServer();
 		LOGGER.info("Initializing config...");
 		Config.init();
 		LOGGER.info("Setting up config...");
@@ -172,6 +187,9 @@ public class SybDiscordAPI {
 						case "lag":
 							listeners.put("lag", new LagListener());
 							break;
+						case "discordchat":
+							jdalisteners.put("discordchat", new Message());
+							break;
 					}
 				}
 			}
@@ -181,6 +199,12 @@ public class SybDiscordAPI {
 			Object o = entry.getValue();
 			LOGGER.info("Registering event(s) for the " + s + " listener.");
 			MinecraftForge.EVENT_BUS.register(o);
+		}
+		for (Map.Entry<String, Object> entry : jdalisteners.entrySet()) {
+			String s = entry.getKey();
+			Object o = entry.getValue();
+			LOGGER.info("Registering jda event(s) for the " + s + " listener.");
+			jda.addEventListener(o);
 		}
 	}
 
