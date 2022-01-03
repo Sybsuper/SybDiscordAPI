@@ -14,7 +14,7 @@ public class DeathListener {
 			HashMap<String, String> params = new HashMap<>();
 			params.put("player", event.getEntityLiving().getName().getUnformattedComponentText());
 			params.put("uuid", event.getEntityLiving().getUniqueID().toString());
-			params.put("message", event.getSource().getDeathMessage(event.getEntityLiving()).getUnformattedComponentText());
+			params.put("message", event.getEntityLiving().getCombatTracker().getDeathMessage().getUnformattedComponentText());
 			SybDiscordAPI.sendMessage("evt.death", params);
 		}
 	}
