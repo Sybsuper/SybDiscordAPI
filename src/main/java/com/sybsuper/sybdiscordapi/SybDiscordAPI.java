@@ -23,7 +23,6 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.security.auth.login.LoginException;
 import java.awt.*;
 import java.time.Instant;
 import java.util.EnumSet;
@@ -33,8 +32,7 @@ import java.util.UUID;
 
 @Mod("sybdiscordapi")
 public class SybDiscordAPI {
-
-	private static final Logger LOGGER = LogManager.getLogger();
+	public static final Logger LOGGER = LogManager.getLogger();
 	public static JDA jda;
 	public static TextChannel channel;
 	public static Guild guild;
@@ -62,6 +60,10 @@ public class SybDiscordAPI {
 		String msg = Config.getString(configpath + ".message");
 		MessageBuilder builder = new MessageBuilder();
 		builder.setContent(parseParams(msg, params));
+		if (jda == null) {
+			LOGGER.info(parseParams(msg, params));
+			return;
+		}
 		if (Config.getBoolean(configpath + ".embed.enabled")) {
 			EmbedBuilder eb = new EmbedBuilder();
 			String title = Config.getString(configpath + ".embed.title");
@@ -135,7 +137,7 @@ public class SybDiscordAPI {
 	}
 
 	@SubscribeEvent
-	public void onServerStarting(FMLServerStartingEvent event) throws StartException {
+	public void onServerStarting(FMLServerStartingEvent event) {
 		server = event.getServer();
 		LOGGER.info("Initializing config...");
 		Config.init();
@@ -143,20 +145,25 @@ public class SybDiscordAPI {
 		Config.setup();
 		LOGGER.info("Building JDA...");
 		try {
-			jda = JDABuilder.createDefault(Config.getString("token")).setEnabledIntents(EnumSet.allOf(GatewayIntent.class)).build();
-		} catch (LoginException e) {
-			throw new StartException(e);
+			try {
+				jda = JDABuilder.createDefault(Config.getString("token")).setEnabledIntents(EnumSet.allOf(GatewayIntent.class)).build();
+			} catch (Exception e) {
+				throw new StartException(e);
+			}
+			LOGGER.info("Awaiting JDA...");
+			try {
+				jda.awaitReady();
+			} catch (Exception e) {
+				throw new StartException(e);
+			}
+			guild = jda.getGuildById(Config.getString("guild"));
+			if (guild == null) throw new StartException("No guild found with the configured id.");
+			channel = guild.getTextChannelById(Config.getString("channel"));
+			if (channel == null) throw new StartException("No text channel found with the configured id.");
+		} catch (StartException e) {
+			e.printStackTrace();
+			jda = null;
 		}
-		LOGGER.info("Awaiting JDA...");
-		try {
-			jda.awaitReady();
-		} catch (InterruptedException e) {
-			throw new StartException(e);
-		}
-		guild = jda.getGuildById(Config.getString("guild"));
-		if (guild == null) throw new StartException("No guild found with the configured id.");
-		channel = guild.getTextChannelById(Config.getString("channel"));
-		if (channel == null) throw new StartException("No text channel found with the configured id.");
 		for (Map.Entry<String, ForgeConfigSpec.ConfigValue<?>> entry : Config.cv.entrySet()) {
 			String s = entry.getKey();
 			ForgeConfigSpec.ConfigValue<?> configValue = entry.getValue();
@@ -204,18 +211,22 @@ public class SybDiscordAPI {
 			String s = entry.getKey();
 			Object o = entry.getValue();
 			LOGGER.info("Registering jda event(s) for the " + s + " listener.");
-			jda.addEventListener(o);
+			if (jda != null) {
+				jda.addEventListener(o);
+			}
 		}
 	}
 
 	@SubscribeEvent
 	public void onStop(FMLServerStoppedEvent event) {
-		try {
-			jda.shutdown();
-		} catch (Exception e) {
-			//noinspection ConstantConditions
-			if (!(e instanceof ClassNotFoundException)) {
-				e.printStackTrace();
+		if (jda != null) {
+			try {
+				jda.shutdown();
+			} catch (Exception e) {
+				//noinspection ConstantConditions
+				if (!(e instanceof ClassNotFoundException)) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
