@@ -33,7 +33,8 @@ public class SybTranslator {
 
 	public static String translateTextComponent(ITextComponent component) {
 		StringBuilder raw = new StringBuilder();
-		raw.append(component.getUnformattedComponentText());
+		// Do this or not idk man?
+		//raw.append(component.getUnformattedComponentText());
 		if (component.getSiblings().isEmpty()) {
 			if (component instanceof TranslationTextComponent) {
 				raw.append(translate((TranslationTextComponent) component));
