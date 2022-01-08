@@ -89,7 +89,8 @@ public class Config {
 		configureEvent(
 				"lag",
 				"Send a message when the server has a lag spike",
-				"**The server is lagging, the last tick was %last_tick_delta_seconds% seconds ago.**",
+				"**The server is lagging (world: %world%), the last tick was %last_tick_delta_seconds% seconds ago.**",
+				"world: the name of the world that is causing lag.",
 				"last_tick_delta_seconds: the time between now and the last tick."
 		);
 		c = cb.build();
